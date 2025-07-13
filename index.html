@@ -36,23 +36,101 @@
       <div class="card">
         <input type="text" id="question" placeholder="Kérdés">
         <input type="text" id="answer" placeholder="Válasz">
-        <button onclick
-<div class="section">
-  <h2>🤖 Copilot Tipp</h2>
-  <div class="card" id="copilotTip">
-    <p id="tipText">„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”</p>
-    <button onclick="nextTip()">🔄 Új tipp</button>
-  </div>
-</div>
-const tips = [
-  "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
-  "„Nyelvtanban mindig keresd meg a főmondatot először!”",
-  "„Történelemhez készíts idővonalat, és színezd a korszakokat!”",
-  "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
-];
-let tipIndex = 0;
+        <button onclick="addCard()">➕ Hozzáadás</button>
+      </div>
+      <div class="card">
+        <input type="text" id="search" placeholder="🔍 Keresés kártyák között" oninput="searchCards()" style="width: 95%;">
+      </div>
+      <div class="card">
+        <button onclick="exportCards()">📤 Exportálás JSON-ba</button>
+      </div>
+      <div id="flashcards"></div>
+    </div>
 
-function nextTip() {
-  tipIndex = (tipIndex + 1) % tips.length;
-  document.getElementById('tipText').innerText = tips[tipIndex];
-}
+    <div class="section">
+      <h2>🤖 Copilot Tipp</h2>
+      <div class="card" id="copilotTip">
+        <p id="tipText">„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”</p>
+        <button onclick="nextTip()">🔄 Új tipp</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const flashcardsContainer = document.getElementById('flashcards');
+    const tips = [
+      "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
+      "„Nyelvtanban mindig keresd meg a főmondatot először!”",
+      "„Történelemhez készíts idővonalat, és színezd a korszakokat!”",
+      "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
+    ];
+    let tipIndex = 0;
+
+    function nextTip() {
+      tipIndex = (tipIndex + 1) % tips.length;
+      document.getElementById('tipText').innerText = tips[tipIndex];
+    }
+
+    function loadCards() {
+      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+      flashcardsContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card flashcard';
+        div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
+          <button onclick="deleteCard(${index})">🗑️</button>`;
+        flashcardsContainer.appendChild(div);
+      });
+    }
+
+    function addCard() {
+      const q = document.getElementById('question').value.trim();
+      const a = document.getElementById('answer').value.trim();
+      if (q && a) {
+        const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+        cards.push({ q, a });
+        localStorage.setItem('flashcards', JSON.stringify(cards));
+        loadCards();
+        document.getElementById('question').value = '';
+        document.getElementById('answer').value = '';
+      }
+    }
+
+    function deleteCard(index) {
+      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+      cards.splice(index, 1);
+      localStorage.setItem('flashcards', JSON.stringify(cards));
+      loadCards();
+    }
+
+    function searchCards() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+      flashcardsContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        if (card.q.toLowerCase().includes(query) || card.a.toLowerCase().includes(query)) {
+          const div = document.createElement('div');
+          div.className = 'card flashcard';
+          div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
+            <button onclick="deleteCard(${index})">🗑️</button>`;
+          flashcardsContainer.appendChild(div);
+        }
+      });
+    }
+
+    function exportCards() {
+      const cards = localStorage.getItem('flashcards');
+      const blob = new Blob([cards], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tanulokartyak.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    window.onload = loadCards;
+  </script>
+</body>
+</html>
+
