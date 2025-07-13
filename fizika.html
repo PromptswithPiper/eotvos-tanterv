@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Fizika – Eötvös Felkészülés</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0fff0; padding: 20px; }
+    nav a { margin-right: 10px; text-decoration: none; color: #228b22; font-weight: bold; }
+    .card { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input { width: 45%; padding: 8px; margin: 5px; }
+    button { padding: 8px 12px; background: #228b22; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>⚡ Fizika – Heti Terv</h1>
+  <nav>
+    <a href="index.html">🏠 Főoldal</a>
+    <a href="nyelvtan.html">📘 Nyelvtan</a>
+    <a href="tortenelem.html">📜 Történelem</a>
+    <a href="fizika.html">⚡ Fizika</a>
+  </nav>
+
+  <div class="card">1. hét: Elektromos alapfogalmak</div>
+  <div class="card">2. hét: Ohm törvénye, ellenállás</div>
+  <div class="card">3. hét: Soros és párhuzamos kapcsolás</div>
+  <div class="card">4. hét: Feszültség, áramerősség számítások</div>
+  <div class="card">5. hét: Gyakorló feladatok, kapcsolási rajzok</div>
+  <div class="card">6. hét: Összefoglalás, szimulációk, tesztfeladatok</div>
+
+  <h2>🧠 Tanulókártyák – Fizika</h2>
+  <div class="card">
+    <input type="text" id="q" placeholder="Kérdés">
+    <input type="text" id="a" placeholder="Válasz">
+    <button onclick="add()">➕ Hozzáadás</button>
+  </div>
+  <div id="cards"></div>
+
+  <script>
+    function load() {
+      const data = JSON.parse(localStorage.getItem('fizikaCards')) || [];
+      document.getElementById('cards').innerHTML = '';
+      data.forEach((c, i) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<strong>${c.q}</strong><br>${c.a} <button onclick="del(${i})">🗑️</button>`;
+        document.getElementById('cards').appendChild(div);
+      });
+    }
+    function add() {
+      const q = document.getElementById('q').value;
+      const a = document.getElementById('a').value;
+      if (q && a) {
+        const data = JSON.parse(localStorage.getItem('fizikaCards')) || [];
+        data.push({ q, a });
+        localStorage.setItem('fizikaCards', JSON.stringify(data));
+        document.getElementById('q').value = '';
+        document.getElementById('a').value = '';
+        load();
+      }
+    }
+    function del(i) {
+      const data = JSON.parse(localStorage.getItem('fizikaCards')) || [];
+      data.splice(i, 1);
+      localStorage.setItem('fizikaCards', JSON.stringify(data));
+      load();
+    }
+    window.onload = load;
+  </script>
+</body>
+</html>
