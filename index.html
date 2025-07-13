@@ -7,6 +7,7 @@
   <style>
     body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #eef2f3; }
     h1, h2 { color: #2c3e50; }
+    nav a { margin-right: 10px; text-decoration: none; color: #3498db; font-weight: bold; }
     .container { max-width: 800px; margin: auto; }
     .section { margin-bottom: 40px; }
     .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
@@ -21,6 +22,13 @@
   <div class="container">
     <h1>📘 Eötvös Felkészülés – Tanulási Terv</h1>
 
+    <nav>
+      <a href="index.html">🏠 Főoldal</a>
+      <a href="nyelvtan.html">📘 Nyelvtan</a>
+      <a href="tortenelem.html">📜 Történelem</a>
+      <a href="fizika.html">⚡ Fizika</a>
+    </nav>
+
     <div class="section">
       <h2>📅 Heti Tanterv</h2>
       <div class="card"><strong>1. hét:</strong> Alárendelő mondatok, dualizmus, elektromos alapfogalmak<br><span class="tip">Tipp: Készíts mondattérképet és idővonalat!</span></div>
@@ -30,7 +38,6 @@
       <div class="card"><strong>5. hét:</strong> Tesztek, összefoglalás, gyakorló feladatok<br><span class="tip">Tipp: Készíts saját mini dolgozatokat!</span></div>
       <div class="card"><strong>6. hét:</strong> Ismétlés, idővonal, szimulációk<br><span class="tip">Tipp: Használj PhET szimulációkat és fogalomtárat!</span></div>
     </div>
-
     <div class="section">
       <h2>🧠 Tanulókártya Készítő</h2>
       <div class="card">
@@ -54,10 +61,26 @@
         <button onclick="nextTip()">🔄 Új tipp</button>
       </div>
     </div>
+
+    <div class="section">
+      <h2>⏳ Tanulási Időzítő</h2>
+      <div class="card">
+        <p id="studyTimer">25:00</p>
+        <button onclick="startStudyTimer()">▶️ Indítás</button>
+        <button onclick="resetStudyTimer()">🔄 Újra</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📅 Eötvös Kezdésig Hátralévő Idő</h2>
+      <div class="card">
+        <p id="countdown"></p>
+      </div>
+    </div>
   </div>
 
   <script>
-    const flashcardsContainer = document.getElementById('flashcards');
+    // Copilot tippek
     const tips = [
       "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
       "„Nyelvtanban mindig keresd meg a főmondatot először!”",
@@ -65,12 +88,13 @@
       "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
     ];
     let tipIndex = 0;
-
     function nextTip() {
       tipIndex = (tipIndex + 1) % tips.length;
       document.getElementById('tipText').innerText = tips[tipIndex];
     }
 
+    // Tanulókártyák
+    const flashcardsContainer = document.getElementById('flashcards');
     function loadCards() {
       const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
       flashcardsContainer.innerHTML = '';
@@ -82,7 +106,6 @@
         flashcardsContainer.appendChild(div);
       });
     }
-
     function addCard() {
       const q = document.getElementById('question').value.trim();
       const a = document.getElementById('answer').value.trim();
@@ -95,14 +118,12 @@
         document.getElementById('answer').value = '';
       }
     }
-
     function deleteCard(index) {
       const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
       cards.splice(index, 1);
       localStorage.setItem('flashcards', JSON.stringify(cards));
       loadCards();
     }
-
     function searchCards() {
       const query = document.getElementById('search').value.toLowerCase();
       const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
@@ -117,7 +138,6 @@
         }
       });
     }
-
     function exportCards() {
       const cards = localStorage.getItem('flashcards');
       const blob = new Blob([cards], { type: 'application/json' });
@@ -129,7 +149,53 @@
       URL.revokeObjectURL(url);
     }
 
-    window.onload = loadCards;
+    // Tanulási időzítő
+    let studyMinutes = 25;
+    let studySeconds = 0;
+    let studyInterval;
+    function updateStudyDisplay() {
+      const m = String(studyMinutes).padStart(2, '0');
+      const s = String(studySeconds).padStart(2, '0');
+      document.getElementById('studyTimer').innerText = `${m}:${s}`;
+    }
+    function startStudyTimer() {
+      clearInterval(studyInterval);
+      studyInterval = setInterval(() => {
+        if (studySeconds === 0) {
+          if (studyMinutes === 0) {
+            clearInterval(studyInterval);
+            alert("⏰ Idő lejárt! Ideje szünetet tartani.");
+            return;
+          }
+          studyMinutes--;
+          studySeconds = 59;
+        } else {
+          studySeconds--;
+        }
+        updateStudyDisplay();
+      }, 1000);
+    }
+    function resetStudyTimer() {
+      clearInterval(studyInterval);
+      studyMinutes = 25;
+      studySeconds = 0;
+      updateStudyDisplay();
+    }
+
+    // Visszaszámláló szeptemberig
+    function updateCountdown() {
+      const targetDate = new Date("2025-09-01);
+      const now = new Date();
+      const diff = targetDate - now;
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      document.getElementById('countdown').innerText = `🎓 ${days} nap van hátra a tanévkezdésig!`;
+    }
+
+    window.onload = () => {
+      loadCards();
+      updateStudyDisplay();
+      updateCountdown();
+    };
   </script>
 </body>
 </html>
