@@ -37,3 +37,22 @@
         <input type="text" id="question" placeholder="Kérdés">
         <input type="text" id="answer" placeholder="Válasz">
         <button onclick
+<div class="section">
+  <h2>🤖 Copilot Tipp</h2>
+  <div class="card" id="copilotTip">
+    <p id="tipText">„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”</p>
+    <button onclick="nextTip()">🔄 Új tipp</button>
+  </div>
+</div>
+const tips = [
+  "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
+  "„Nyelvtanban mindig keresd meg a főmondatot először!”",
+  "„Történelemhez készíts idővonalat, és színezd a korszakokat!”",
+  "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
+];
+let tipIndex = 0;
+
+function nextTip() {
+  tipIndex = (tipIndex + 1) % tips.length;
+  document.getElementById('tipText').innerText = tips[tipIndex];
+}
