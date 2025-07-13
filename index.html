@@ -16,8 +16,186 @@
     input { padding: 8px; margin: 5px; width: 45%; border: 1px solid #ccc; border-radius: 5px; }
     button { padding: 8px 12px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
     button:hover { background-color: #2980b9; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
+<script>
+  // Copilot tippek
+  const tips = [
+    "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
+    "„Nyelvtanban mindig keresd meg a főmondatot először!”",
+    "„Történelemhez készíts idővonalat, és színezd a korszakokat!”",
+    "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
+  ];
+  let tipIndex = 0;
+  function nextTip() {
+    tipIndex = (tipIndex + 1) % tips.length;
+    document.getElementById('tipText').innerText = tips[tipIndex];
+  }
+
+  // Tanulókártyák
+  const flashcardsContainer = document.getElementById('flashcards');
+  function loadCards() {
+    const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+    flashcardsContainer.innerHTML = '';
+    cards.forEach((card, index) => {
+      const div = document.createElement('div');
+      div.className = 'card flashcard';
+      div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
+        <button onclick="deleteCard(${index})">🗑️</button>`;
+      flashcardsContainer.appendChild(div);
+    });
+  }
+  function addCard() {
+    const q = document.getElementById('question').value.trim();
+    const a = document.getElementById('answer').value.trim();
+    if (q && a) {
+      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+      cards.push({ q, a });
+      localStorage.setItem('flashcards', JSON.stringify(cards));
+      loadCards();
+      document.getElementById('question').value = '';
+      document.getElementById('answer').value = '';
+    }
+  }
+  function deleteCard(index) {
+    const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+    cards.splice(index, 1);
+    localStorage.setItem('flashcards', JSON.stringify(cards));
+    loadCards();
+  }
+  function searchCards() {
+    const query = document.getElementById('search').value.toLowerCase();
+    const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+    flashcardsContainer.innerHTML = '';
+    cards.forEach((card, index) => {
+      if (card.q.toLowerCase().includes(query) || card.a.toLowerCase().includes(query)) {
+        const div = document.createElement('div');
+        div.className = 'card flashcard';
+        div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
+          <button onclick="deleteCard(${index})">🗑️</button>`;
+        flashcardsContainer.appendChild(div);
+      }
+    });
+  }
+  function exportCards() {
+    const cards = localStorage.getItem('flashcards');
+    const blob = new Blob([cards], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tanulokartyak.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Tanulási időzítő
+  let studyMinutes = 25;
+  let studySeconds = 0;
+  let studyInterval;
+  function updateStudyDisplay() {
+    const m = String(studyMinutes).padStart(2, '0');
+    const s = String(studySeconds).padStart(2, '0');
+    document.getElementById('studyTimer').innerText = `${m}:${s}`;
+  }
+  function startStudyTimer() {
+    clearInterval(studyInterval);
+    studyInterval = setInterval(() => {
+      if (studySeconds === 0) {
+        if (studyMinutes === 0) {
+          clearInterval(studyInterval);
+          alert("⏰ Idő lejárt! Ideje szünetet tartani.");
+          return;
+        }
+        studyMinutes--;
+        studySeconds = 59;
+      } else {
+        studySeconds--;
+      }
+      updateStudyDisplay();
+    }, 1000);
+  }
+  function resetStudyTimer() {
+    clearInterval(studyInterval);
+    studyMinutes = 25;
+    studySeconds = 0;
+    updateStudyDisplay();
+  }
+
+  // Visszaszámláló szeptember 2-ig (nap, óra, perc, másodperc)
+  function updateCountdown() {
+    const targetDate = new Date("2025-09-02T00:00:00");
+    const now = new Date();
+    const diff = targetDate - now;
+
+    if (diff <= 0) {
+      document.getElementById("countdown").innerText = "🎓 Már elkezdődött a tanév!";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById("countdown").innerText =
+      `🎓 ${days} nap ${hours} óra ${minutes} perc ${seconds} másodperc van hátra a tanévkezdésig!`;
+  }
+  setInterval(updateCountdown, 1000);
+
+  // Tesztgenerátor
+  function generateTest() {
+    const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+    const testArea = document.getElementById('testArea');
+    testArea.innerHTML = '';
+
+    if (cards.length === 0) {
+      testArea.innerHTML = '<p>Nincs elérhető tanulókártya a teszthez.</p>';
+      return;
+    }
+
+    const shuffled = cards.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, Math.min(5, cards.length));
+
+    selected.forEach((card, index) => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <strong>${index + 1}. kérdés:</strong> ${card.q}<br>
+        <input type="text" id="answer${index}" placeholder="Válasz">
+        <button onclick="checkAnswer(${index}, '${card.a.replace(/'/g, "\\'")}')">✅ Ellenőrzés</button>
+        <p id="result${index}"></p>
+      `;
+      testArea.appendChild(div);
+    });
+  }
+
+  function checkAnswer(index, correctAnswer) {
+    const userAnswer = document.getElementById(`answer${index}`).value.trim().toLowerCase();
+    const result = document.getElementById(`result${index}`);
+    if (userAnswer === correctAnswer.toLowerCase()) {
+      result.innerText = '✔️ Helyes válasz!';
+      result.style.color = 'green';
+    } else {
+      result.innerText = `❌ Nem egészen. Helyes válasz: ${correctAnswer}`;
+      result.style.color = 'red';
+    }
+  }
+
+  // Betöltéskor
+  window.onload = () => {
+    loadCards();
+    updateStudyDisplay();
+    updateCountdown();
+  };
+</script>
+</body>
+</html>
+
 <body>
   <div class="container">
     <h1>📘 Eötvös Felkészülés – Tanulási Terv</h1>
@@ -74,173 +252,16 @@
     <div class="section">
       <h2>📅 Eötvös Kezdésig Hátralévő Idő</h2>
       <div class="card">
-        <p id="countdown"></p>
+        <p id="countdown" style="font-size: 1.5em; font-weight: bold; animation: pulse 1s infinite;"></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📝 Tesztgenerátor</h2>
+      <div class="card">
+        <button onclick="generateTest()">🎲 Teszt indítása</button>
+        <div id="testArea"></div>
       </div>
     </div>
   </div>
-
-  <script>
-    // Copilot tippek
-    const tips = [
-      "„Ha nem érted a fizikai képletet, próbáld meg lerajzolni a helyzetet.”",
-      "„Nyelvtanban mindig keresd meg a főmondatot először!”",
-      "„Történelemhez készíts idővonalat, és színezd a korszakokat!”",
-      "„Tanulókártyákat használj ismétléshez – napi 5 perc is sokat számít!”"
-    ];
-    let tipIndex = 0;
-    function nextTip() {
-      tipIndex = (tipIndex + 1) % tips.length;
-      document.getElementById('tipText').innerText = tips[tipIndex];
-    }
-
-    // Tanulókártyák
-    const flashcardsContainer = document.getElementById('flashcards');
-    function loadCards() {
-      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
-      flashcardsContainer.innerHTML = '';
-      cards.forEach((card, index) => {
-        const div = document.createElement('div');
-        div.className = 'card flashcard';
-        div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
-          <button onclick="deleteCard(${index})">🗑️</button>`;
-        flashcardsContainer.appendChild(div);
-      });
-    }
-    function addCard() {
-      const q = document.getElementById('question').value.trim();
-      const a = document.getElementById('answer').value.trim();
-      if (q && a) {
-        const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
-        cards.push({ q, a });
-        localStorage.setItem('flashcards', JSON.stringify(cards));
-        loadCards();
-        document.getElementById('question').value = '';
-        document.getElementById('answer').value = '';
-      }
-    }
-    function deleteCard(index) {
-      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
-      cards.splice(index, 1);
-      localStorage.setItem('flashcards', JSON.stringify(cards));
-      loadCards();
-    }
-    function searchCards() {
-      const query = document.getElementById('search').value.toLowerCase();
-      const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
-      flashcardsContainer.innerHTML = '';
-      cards.forEach((card, index) => {
-        if (card.q.toLowerCase().includes(query) || card.a.toLowerCase().includes(query)) {
-          const div = document.createElement('div');
-          div.className = 'card flashcard';
-          div.innerHTML = `<strong>${card.q}</strong><span>${card.a}</span>
-            <button onclick="deleteCard(${index})">🗑️</button>`;
-          flashcardsContainer.appendChild(div);
-        }
-      });
-    }
-    function exportCards() {
-      const cards = localStorage.getItem('flashcards');
-      const blob = new Blob([cards], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'tanulokartyak.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-<div class="section">
-  <h2>📝 Tesztgenerátor</h2>
-  <div class="card">
-    <button onclick="generateTest()">🎲 Teszt indítása</button>
-    <div id="testArea"></div>
-  </div>
-</div>
-
-    // Tanulási időzítő
-    let studyMinutes = 25;
-    let studySeconds = 0;
-    let studyInterval;
-    function updateStudyDisplay() {
-      const m = String(studyMinutes).padStart(2, '0');
-      const s = String(studySeconds).padStart(2, '0');
-      document.getElementById('studyTimer').innerText = `${m}:${s}`;
-    }
-    function startStudyTimer() {
-      clearInterval(studyInterval);
-      studyInterval = setInterval(() => {
-        if (studySeconds === 0) {
-          if (studyMinutes === 0) {
-            clearInterval(studyInterval);
-            alert("⏰ Idő lejárt! Ideje szünetet tartani.");
-            return;
-          }
-          studyMinutes--;
-          studySeconds = 59;
-        } else {
-          studySeconds--;
-        }
-        updateStudyDisplay();
-      }, 1000);
-    }
-    function resetStudyTimer() {
-      clearInterval(studyInterval);
-      studyMinutes = 25;
-      studySeconds = 0;
-      updateStudyDisplay();
-    }
-
-    // Visszaszámláló szeptemberig
-    function updateCountdown() {
-      const targetDate = new Date("2025-09-01);
-      const now = new Date();
-      const diff = targetDate - now;
-      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-      document.getElementById('countdown').innerText = `🎓 ${days} nap van hátra a tanévkezdésig!`;
-    }
-
-    window.onload = () => {
-      loadCards();
-      updateStudyDisplay();
-      updateCountdown();
-    };
-  </function generateTest() {
-  const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
-  const testArea = document.getElementById('testArea');
-  testArea.innerHTML = '';
-
-  if (cards.length === 0) {
-    testArea.innerHTML = '<p>Nincs elérhető tanulókártya a teszthez.</p>';
-    return;
-  }
-
-  const shuffled = cards.sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, Math.min(5, cards.length));
-
-  selected.forEach((card, index) => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <strong>${index + 1}. kérdés:</strong> ${card.q}<br>
-      <input type="text" id="answer${index}" placeholder="Válasz">
-      <button onclick="checkAnswer(${index}, '${card.a.replace(/'/g, "\\'")}')">✅ Ellenőrzés</button>
-      <p id="result${index}"></p>
-    `;
-    testArea.appendChild(div);
-  });
-}
-
-function checkAnswer(index, correctAnswer) {
-  const userAnswer = document.getElementById(`answer${index}`).value.trim().toLowerCase();
-  const result = document.getElementById(`result${index}`);
-  if (userAnswer === correctAnswer.toLowerCase()) {
-    result.innerText = '✔️ Helyes válasz!';
-    result.style.color = 'green';
-  } else {
-    result.innerText = `❌ Nem egészen. Helyes válasz: ${correctAnswer}`;
-    result.style.color = 'red';
-  }
-}
->
-</body>
-</html>
 
