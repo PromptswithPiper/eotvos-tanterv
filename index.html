@@ -148,6 +148,13 @@
       a.click();
       URL.revokeObjectURL(url);
     }
+<div class="section">
+  <h2>📝 Tesztgenerátor</h2>
+  <div class="card">
+    <button onclick="generateTest()">🎲 Teszt indítása</button>
+    <div id="testArea"></div>
+  </div>
+</div>
 
     // Tanulási időzítő
     let studyMinutes = 25;
@@ -196,7 +203,44 @@
       updateStudyDisplay();
       updateCountdown();
     };
-  </script>
+  </function generateTest() {
+  const cards = JSON.parse(localStorage.getItem('flashcards')) || [];
+  const testArea = document.getElementById('testArea');
+  testArea.innerHTML = '';
+
+  if (cards.length === 0) {
+    testArea.innerHTML = '<p>Nincs elérhető tanulókártya a teszthez.</p>';
+    return;
+  }
+
+  const shuffled = cards.sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, Math.min(5, cards.length));
+
+  selected.forEach((card, index) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <strong>${index + 1}. kérdés:</strong> ${card.q}<br>
+      <input type="text" id="answer${index}" placeholder="Válasz">
+      <button onclick="checkAnswer(${index}, '${card.a.replace(/'/g, "\\'")}')">✅ Ellenőrzés</button>
+      <p id="result${index}"></p>
+    `;
+    testArea.appendChild(div);
+  });
+}
+
+function checkAnswer(index, correctAnswer) {
+  const userAnswer = document.getElementById(`answer${index}`).value.trim().toLowerCase();
+  const result = document.getElementById(`result${index}`);
+  if (userAnswer === correctAnswer.toLowerCase()) {
+    result.innerText = '✔️ Helyes válasz!';
+    result.style.color = 'green';
+  } else {
+    result.innerText = `❌ Nem egészen. Helyes válasz: ${correctAnswer}`;
+    result.style.color = 'red';
+  }
+}
+>
 </body>
 </html>
 
